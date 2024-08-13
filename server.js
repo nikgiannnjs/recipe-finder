@@ -1,13 +1,13 @@
 const express = require("express");
 const dotenv = require("dotenv");
-const client = require("./dbconnection.js");
+const pool = require("./dbconnection.js");
 const app = require("./app.js");
 
 dotenv.config();
 
 const port = process.env.LOCALHOST_PORT || 3000;
 
-client.connect((err) => {
+pool.connect((err) => {
   if (err) {
     console.error("Connection to db failed", err.stack);
   } else {

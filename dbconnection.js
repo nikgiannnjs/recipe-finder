@@ -1,5 +1,5 @@
 const express = require("express");
-const { Client } = require("pg");
+const { Pool } = require("pg");
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -9,7 +9,7 @@ const database = process.env.DATABASE;
 const user = process.env.POSTGRESQL_USER;
 const password = process.env.PASSWORD;
 
-const client = new Client({
+const pool = new Pool({
   host,
   port,
   database,
@@ -17,4 +17,4 @@ const client = new Client({
   password,
 });
 
-module.exports = client;
+module.exports = pool;
