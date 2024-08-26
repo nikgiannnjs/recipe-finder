@@ -6,7 +6,7 @@ const pool = require("../dbconnection");
 router.get("/allrecipes", async (req, res) => {
   try {
     const SQL =
-      "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time , description  FROM recipes";
+      "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description FROM recipes";
 
     const result = await pool.query(SQL, []);
 
@@ -28,23 +28,22 @@ router.get("/allrecipes", async (req, res) => {
           first_ingredient,
           second_ingredient,
           third_ingredient,
+          fourth_ingredient:
+            fourth_ingredient !== null ? fourth_ingredient : undefined,
+          fifth_ingredient:
+            fifth_ingredient !== null ? fifth_ingredient : undefined,
           cooking_time,
           description,
         };
-
-        if (fourth_ingredient !== null)
-          recipe.fourth_ingredient = fourth_ingredient;
-        if (fifth_ingredient !== null)
-          recipe.fifth_ingredient = fifth_ingredient;
 
         return recipe;
       }
     );
 
-    res.status(201).json(processedRecipes);
+    res.status(200).json(processedRecipes);
   } catch (err) {
     res.status(501).json({
-      message: "Something went with the server. Please try again later",
+      message: "Something went wrong with the server. Please try again later",
     });
 
     console.log("Server error at /allrecipes endpoint", err);
