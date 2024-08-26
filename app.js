@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const app = express();
 const recipeRoutes = require("./routes/recipeRoutes");
+app.use(express.json());
 dotenv.config();
 
 // app.use("/recipefinder/users", userRoutes);
