@@ -197,4 +197,48 @@ router.post("/addnewrecipe", async (req, res) => {
   }
 });
 
+router.get("/findrecipe", async (req, res) => {
+  try {
+    const ingredients = req.query.q;
+    let SQL;
+    let recipe;
+
+    if (ingredients.length < 3) {
+      return res.status(400).json({
+        message: "Please provide at least 3 ingredients",
+      });
+    } else if (ingredients.length === 3) {
+      SQL =
+        "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, cooking_time, description FROM recipes WHERE first_ingredient = $1 AND second_ingredient = $2 AND third_ingredient = $3";
+
+      recipe = await pool.query(SQL, ingredients);
+    } else if (ingredients.length === 4) {
+      SQL =
+        "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, cooking_time, description FROM recipes WHERE first_ingredient = $1 AND second_ingredient = $2 AND third_ingredient = $3 AND fourth_ingredient = $4";
+
+      recipe = await pool.query(SQL, ingredients);
+    } else if (ingredients.length === 5) {
+      SQL =
+        "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description FROM recipes WHERE first_ingredient = $1 AND second_ingredient = $2 AND third_ingredient = $3 AND fourth_ingredient = $4 AND fifth_ingredient = $5";
+
+      recipe = await pool.query(SQL, ingredients);
+    }
+
+    if (recipe && recipe.rows.length === 0) {
+      return res.status(400).json({
+        message:
+          "Could not find a recipe with these ingredients. Please provide other ingredients or add a new recipe with the ingredients you have.",
+      });
+    } else {
+      return res.status(200).json(recipe.rows);
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Server error at /findrecipe endpoint", err);
+  }
+});
+
 module.exports = router;
