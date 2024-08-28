@@ -1,6 +1,5 @@
 .env
 /node_modules
 db.sql
-userRoutes.js
 authRoutes.js
 controllers
