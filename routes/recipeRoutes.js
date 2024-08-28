@@ -50,9 +50,10 @@ router.get("/allrecipes", async (req, res) => {
   }
 });
 
-router.post("/addnewrecipeadminonly", async (req, res) => {
+router.post("/addnewrecipeadminsonly", async (req, res) => {
   try {
     const {
+      email,
       category,
       recipe_name,
       first_ingredient,
@@ -63,6 +64,15 @@ router.post("/addnewrecipeadminonly", async (req, res) => {
       cooking_time,
       description,
     } = req.body;
+
+    const adminCheckSQL = "SELECT admin_state FROM users WHERE email = $1";
+    const admin = await pool.query(adminCheckSQL, [email]);
+
+    if (admin.rows.length === 0 || admin.rows[0].admin_state === false) {
+      return res.status(400).json({
+        messsage: "Access denied. Admins only",
+      });
+    }
 
     const correctCategory =
       category.charAt(0).toUpperCase() + category.slice(1);
