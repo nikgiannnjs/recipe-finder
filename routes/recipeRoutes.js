@@ -50,7 +50,7 @@ router.get("/allrecipes", async (req, res) => {
   }
 });
 
-router.post("/addnewrecipe", async (req, res) => {
+router.post("/addnewrecipeadminonly", async (req, res) => {
   try {
     const {
       category,
@@ -84,12 +84,12 @@ router.post("/addnewrecipe", async (req, res) => {
       ? fifth_ingredient.charAt(0).toUpperCase() + fifth_ingredient.slice(1)
       : null;
 
+    //Check if the category is valid: based on the category table
     const categoryCheck = "SELECT * FROM categories WHERE category = $1";
     const categoryCheckResult = await pool.query(categoryCheck, [
       correctCategory,
     ]);
 
-    //Check if the category is valid: based on the category table
     if (categoryCheckResult.rows.length === 0) {
       return res.status(400).json({
         message:
@@ -240,5 +240,9 @@ router.get("/findrecipe", async (req, res) => {
     console.error("Server error at /findrecipe endpoint", err);
   }
 });
+
+//update recipe only if admin
+
+//delete recipe only if admin
 
 module.exports = router;
