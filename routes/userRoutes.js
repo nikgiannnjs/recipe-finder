@@ -4,7 +4,6 @@ const router = express.Router();
 const pool = require("../dbconnection");
 const bcrypt = require("bcryptjs");
 
-//User register
 router.post("/registration", async (req, res) => {
   try {
     const { firstName, lastName, email, password, passwordConfirm } = req.body;
@@ -192,6 +191,54 @@ router.post("/addmyrecipe", async (req, res) => {
 
     res.status(201).json({ message: "Recipe added successfully" });
   } catch (err) {}
+});
+
+router.get("/myrecipes", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const SQL =
+      "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description FROM recipes WHERE created_by = $1";
+    const myRecipes = await pool.query(SQL, [email]);
+
+    const processedRecipes = myRecipes.rows.map(
+      ({
+        category,
+        recipe_name,
+        first_ingredient,
+        second_ingredient,
+        third_ingredient,
+        fourth_ingredient,
+        fifth_ingredient,
+        cooking_time,
+        description,
+      }) => {
+        const recipe = {
+          category,
+          recipe_name,
+          first_ingredient,
+          second_ingredient,
+          third_ingredient,
+          fourth_ingredient:
+            fourth_ingredient !== null ? fourth_ingredient : undefined,
+          fifth_ingredient:
+            fifth_ingredient !== null ? fifth_ingredient : undefined,
+          cooking_time,
+          description,
+        };
+
+        return recipe;
+      }
+    );
+
+    res.status(200).json(processedRecipes);
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.err(err);
+  }
 });
 
 //update my recipe(check added_by in recipes table)
