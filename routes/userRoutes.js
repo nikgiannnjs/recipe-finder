@@ -201,4 +201,10 @@ router.get("/myrecipes", async (req, res) => {
 });
 
 //update my recipe(check added_by in recipes table)
+
+//favourites
+
+//get all users(only if admin)
+
+//delete users(only if admin)
 module.exports = router;
