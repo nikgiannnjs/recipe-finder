@@ -92,3 +92,54 @@ exports.logIn = async (req, res) => {
     console.error("Server error at /login endpoint", err);
   }
 };
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { email, oldPassword, newPassword, newPasswordConfirm } = req.body;
+
+    const validUserSQL = "SELECT * FROM users WHERE email =$1";
+
+    const result = await pool.query(validUserSQL, [email]);
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({
+        message: "This email does not exist. Please provide a valid email.",
+      });
+    }
+
+    const user = result.rows[0];
+
+    const validOldPassword = await bcrypt.compare(
+      oldPassword,
+      user.user_password
+    );
+
+    if (validOldPassword === false) {
+      return res.status(400).json({
+        message: "Password confirmation failed.",
+      });
+    }
+
+    if (newPassword != newPasswordConfirm) {
+      return res.status(400).json({
+        message: "Password and password confirmation are not the same.",
+      });
+    }
+    const encryptedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    const SQL =
+      "UPDATE users SET user_password = $1 , password_updated_at = CURRENT_TIMESTAMP WHERE email = $2";
+
+    const newResult = await pool.query(SQL, [encryptedNewPassword, email]);
+
+    return res.status(200).json({
+      message: "Password updated succesfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Server error at /changepassword endpoint", err);
+  }
+};
