@@ -170,3 +170,90 @@ exports.myRecipes = async (req, res) => {
     console.error(err);
   }
 };
+
+exports.updateMyRecipe = async (req, res) => {
+  try {
+    const recipe_id = req.params.id;
+
+    const {
+      email,
+      category,
+      recipe_name,
+      first_ingredient,
+      second_ingredient,
+      third_ingredient,
+      fourth_ingredient,
+      fifth_ingredient,
+      cooking_time,
+      description,
+    } = req.body;
+
+    const checkSQL = "SELECT created_by FROM recipes WHERE recipe_id = $1";
+
+    const createdBy = await pool.query(checkSQL, [recipe_id]);
+
+    if (createdBy.rows[0].created_by !== email) {
+      return res.status(400).json({
+        message: "You cannot update this recipe.",
+      });
+    }
+
+    const {
+      correctCategory,
+      correctRecipeName,
+      correctFirstIngredient,
+      correctSecondIngredient,
+      correctThirdIngredient,
+      correctFourthIngredient,
+      correctFifthIngredient,
+    } = await correctFormats(
+      category,
+      recipe_name,
+      first_ingredient,
+      second_ingredient,
+      third_ingredient,
+      fourth_ingredient,
+      fifth_ingredient
+    );
+
+    const SQL =
+      "UPDATE recipes SET category = $1 , recipe_name = $2 , first_ingredient = $3 , second_ingredient = $4 , third_ingredient = $5 , fourth_ingredient = $6 , fifth_ingredient = $7 , cooking_time = $8 , description = $9 WHERE recipe_id = $10";
+    const values = [
+      correctCategory,
+      correctRecipeName,
+      correctFirstIngredient,
+      correctSecondIngredient,
+      correctThirdIngredient,
+      correctFourthIngredient,
+      correctFifthIngredient,
+      cooking_time,
+      description,
+      recipe_id,
+    ];
+
+    const result = await pool.query(SQL, values);
+
+    res.status(200).json({
+      message: "Recipe updated succesfully",
+      updatedRecipe: {
+        correctCategory,
+        correctRecipeName,
+        correctFirstIngredient,
+        correctSecondIngredient,
+        correctThirdIngredient,
+        ...(correctFourthIngredient !== null &&
+          correctFourthIngredient !== undefined && { correctFourthIngredient }),
+        ...(correctFifthIngredient !== null &&
+          correctFifthIngredient !== undefined && { correctFifthIngredient }),
+        cooking_time,
+        description,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Server error at /updateMyRecipe endpoint", err);
+  }
+};

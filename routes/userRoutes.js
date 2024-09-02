@@ -8,7 +8,7 @@ router.post("/addmyrecipe", userControllers.addMyRecipe);
 
 router.get("/myrecipes", userControllers.myRecipes);
 
-//update my recipe(check added_by in recipes table)
+router.post("/updatemyrecipe/:id", userControllers.updateMyRecipe);
 
 //favourites
 
