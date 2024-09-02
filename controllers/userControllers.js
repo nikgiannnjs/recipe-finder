@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../dbconnection");
+const { correctFormats } = require("../middlewares/formatCorrection");
+const {
+  numberOfIngsCheck,
+} = require("../middlewares/numberOfIngredientsCheck");
 
 exports.addMyRecipe = async (req, res) => {
   try {
@@ -26,25 +30,23 @@ exports.addMyRecipe = async (req, res) => {
       });
     }
 
-    const correctCategory =
-      category.charAt(0).toUpperCase() + category.slice(1);
-    const correctRecipeName =
-      recipe_name.charAt(0).toUpperCase() + recipe_name.slice(1);
-    const correctFirstIngredient = first_ingredient
-      ? first_ingredient.charAt(0).toUpperCase() + first_ingredient.slice(1)
-      : null;
-    const correctSecondIngredient = second_ingredient
-      ? second_ingredient.charAt(0).toUpperCase() + second_ingredient.slice(1)
-      : null;
-    const correctThirdIngredient = third_ingredient
-      ? third_ingredient.charAt(0).toUpperCase() + third_ingredient.slice(1)
-      : null;
-    const correctFourthIngredient = fourth_ingredient
-      ? fourth_ingredient.charAt(0).toUpperCase() + fourth_ingredient.slice(1)
-      : null;
-    const correctFifthIngredient = fifth_ingredient
-      ? fifth_ingredient.charAt(0).toUpperCase() + fifth_ingredient.slice(1)
-      : null;
+    const {
+      correctCategory,
+      correctRecipeName,
+      correctFirstIngredient,
+      correctSecondIngredient,
+      correctThirdIngredient,
+      correctFourthIngredient,
+      correctFifthIngredient,
+    } = await correctFormats(
+      category,
+      recipe_name,
+      first_ingredient,
+      second_ingredient,
+      third_ingredient,
+      fourth_ingredient,
+      fifth_ingredient
+    );
 
     const categoryCheck = "SELECT * FROM categories WHERE category = $1";
     const categoryCheckResult = await pool.query(categoryCheck, [
@@ -70,48 +72,13 @@ exports.addMyRecipe = async (req, res) => {
       });
     }
 
-    let sumFirstIngredient,
-      sumSecondIngredient,
-      sumThirdIngredient,
-      sumFourthIngredient,
-      sumFifthIngredient;
-
-    if (!correctFirstIngredient) {
-      sumFirstIngredient = 0;
-    } else {
-      sumFirstIngredient = 1;
-    }
-
-    if (!correctSecondIngredient) {
-      sumSecondIngredient = 0;
-    } else {
-      sumSecondIngredient = 1;
-    }
-
-    if (!correctThirdIngredient) {
-      sumThirdIngredient = 0;
-    } else {
-      sumThirdIngredient = 1;
-    }
-
-    if (!correctFourthIngredient) {
-      sumFourthIngredient = 0;
-    } else {
-      sumFourthIngredient = 1;
-    }
-
-    if (!correctFifthIngredient) {
-      sumFifthIngredient = 0;
-    } else {
-      sumFifthIngredient = 1;
-    }
-
-    const sum =
-      sumFirstIngredient +
-      sumSecondIngredient +
-      sumThirdIngredient +
-      sumFourthIngredient +
-      sumFifthIngredient;
+    const sum = await numberOfIngsCheck(
+      correctFirstIngredient,
+      correctSecondIngredient,
+      correctThirdIngredient,
+      correctFourthIngredient,
+      correctFifthIngredient
+    );
 
     if (sum < 3) {
       return res.status(400).json({
@@ -147,7 +114,13 @@ exports.addMyRecipe = async (req, res) => {
     ]);
 
     res.status(201).json({ message: "Recipe added successfully" });
-  } catch (err) {}
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Error at /addmyrecipe endpoint", err);
+  }
 };
 
 exports.myRecipes = async (req, res) => {
@@ -194,6 +167,6 @@ exports.myRecipes = async (req, res) => {
       message: "Something went wrong with the server. Please try again later",
     });
 
-    console.err(err);
+    console.error(err);
   }
 };

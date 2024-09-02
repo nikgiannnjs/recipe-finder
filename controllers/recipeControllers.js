@@ -1,6 +1,9 @@
 const express = require("express");
 const pool = require("../dbconnection");
-const ingredientsNumber = require("../middlewares/updateRecipeMiddleware");
+const { correctFormats } = require("../middlewares/formatCorrection");
+const {
+  numberOfIngsCheck,
+} = require("../middlewares/numberOfIngredientsCheck");
 
 exports.allRecipes = async (req, res) => {
   try {
@@ -73,27 +76,24 @@ exports.addNewRecipeAdmins = async (req, res) => {
       });
     }
 
-    const correctCategory =
-      category.charAt(0).toUpperCase() + category.slice(1);
-    const correctRecipeName =
-      recipe_name.charAt(0).toUpperCase() + recipe_name.slice(1);
-    const correctFirstIngredient = first_ingredient
-      ? first_ingredient.charAt(0).toUpperCase() + first_ingredient.slice(1)
-      : null;
-    const correctSecondIngredient = second_ingredient
-      ? second_ingredient.charAt(0).toUpperCase() + second_ingredient.slice(1)
-      : null;
-    const correctThirdIngredient = third_ingredient
-      ? third_ingredient.charAt(0).toUpperCase() + third_ingredient.slice(1)
-      : null;
-    const correctFourthIngredient = fourth_ingredient
-      ? fourth_ingredient.charAt(0).toUpperCase() + fourth_ingredient.slice(1)
-      : null;
-    const correctFifthIngredient = fifth_ingredient
-      ? fifth_ingredient.charAt(0).toUpperCase() + fifth_ingredient.slice(1)
-      : null;
+    const {
+      correctCategory,
+      correctRecipeName,
+      correctFirstIngredient,
+      correctSecondIngredient,
+      correctThirdIngredient,
+      correctFourthIngredient,
+      correctFifthIngredient,
+    } = await correctFormats(
+      category,
+      recipe_name,
+      first_ingredient,
+      second_ingredient,
+      third_ingredient,
+      fourth_ingredient,
+      fifth_ingredient
+    );
 
-    //Check if the category is valid: based on the category table
     const categoryCheck = "SELECT * FROM categories WHERE category = $1";
     const categoryCheckResult = await pool.query(categoryCheck, [
       correctCategory,
@@ -120,49 +120,13 @@ exports.addNewRecipeAdmins = async (req, res) => {
       });
     }
 
-    //Ingredients check:At least 3
-    let sumFirstIngredient,
-      sumSecondIngredient,
-      sumThirdIngredient,
-      sumFourthIngredient,
-      sumFifthIngredient;
-
-    if (!correctFirstIngredient) {
-      sumFirstIngredient = 0;
-    } else {
-      sumFirstIngredient = 1;
-    }
-
-    if (!correctSecondIngredient) {
-      sumSecondIngredient = 0;
-    } else {
-      sumSecondIngredient = 1;
-    }
-
-    if (!correctThirdIngredient) {
-      sumThirdIngredient = 0;
-    } else {
-      sumThirdIngredient = 1;
-    }
-
-    if (!correctFourthIngredient) {
-      sumFourthIngredient = 0;
-    } else {
-      sumFourthIngredient = 1;
-    }
-
-    if (!correctFifthIngredient) {
-      sumFifthIngredient = 0;
-    } else {
-      sumFifthIngredient = 1;
-    }
-
-    const sum =
-      sumFirstIngredient +
-      sumSecondIngredient +
-      sumThirdIngredient +
-      sumFourthIngredient +
-      sumFifthIngredient;
+    const sum = await numberOfIngsCheck(
+      correctFirstIngredient,
+      correctSecondIngredient,
+      correctThirdIngredient,
+      correctFourthIngredient,
+      correctFifthIngredient
+    );
 
     if (sum < 3) {
       return res.status(400).json({
@@ -182,8 +146,9 @@ exports.addNewRecipeAdmins = async (req, res) => {
       });
     }
 
+    const created_by = "admin";
     const SQL =
-      "INSERT INTO recipes (category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)";
+      "INSERT INTO recipes (category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description , created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 , $10)";
     const result = await pool.query(SQL, [
       correctCategory,
       correctRecipeName,
@@ -194,6 +159,7 @@ exports.addNewRecipeAdmins = async (req, res) => {
       correctFifthIngredient,
       cooking_time,
       description,
+      created_by,
     ]);
 
     res.status(201).json({ message: "Recipe added successfully" });
@@ -296,7 +262,7 @@ exports.updateRecipe = async (req, res) => {
 
     res.status(200).json({
       message: "Recipe updated succesfully",
-      urdatedRecipe: {
+      updatedRecipe: {
         category,
         recipe_name,
         first_ingredient,
