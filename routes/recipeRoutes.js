@@ -11,6 +11,7 @@ router.post("/addnewrecipeadminsonly", recipeControllers.addNewRecipeAdmins);
 router.get("/findrecipe", recipeControllers.findRecipe);
 
 //update recipe only if admin
+router.post("/updaterecipe/:id", recipeControllers.updateRecipe);
 
 //delete recipe only if admin
 

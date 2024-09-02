@@ -1,5 +1,6 @@
 const express = require("express");
 const pool = require("../dbconnection");
+const ingredientsNumber = require("../middlewares/updateRecipeMiddleware");
 
 exports.allRecipes = async (req, res) => {
   try {
@@ -246,5 +247,74 @@ exports.findRecipe = async (req, res) => {
     });
 
     console.error("Server error at /findrecipe endpoint", err);
+  }
+};
+
+exports.updateRecipe = async (req, res) => {
+  try {
+    const recipe_id = req.params.id;
+
+    const {
+      email,
+      category,
+      recipe_name,
+      first_ingredient,
+      second_ingredient,
+      third_ingredient,
+      fourth_ingredient,
+      fifth_ingredient,
+      cooking_time,
+      description,
+    } = req.body;
+
+    const checkSQL = "SELECT admin_state FROM users WHERE email = $1";
+
+    const admin = await pool.query(checkSQL, [email]);
+
+    if (admin.rows.length === 0 || admin.rows[0].admin_state === false) {
+      return res.status(400).json({
+        message: "Access denied, admins only",
+      });
+    }
+
+    const SQL =
+      "UPDATE recipes SET category = $1 , recipe_name = $2 , first_ingredient = $3 , second_ingredient = $4 , third_ingredient = $5 , fourth_ingredient = $6 , fifth_ingredient = $7 , cooking_time = $8 , description = $9 WHERE recipe_id = $10";
+    const values = [
+      category,
+      recipe_name,
+      first_ingredient,
+      second_ingredient,
+      third_ingredient,
+      fourth_ingredient,
+      fifth_ingredient,
+      cooking_time,
+      description,
+      recipe_id,
+    ];
+
+    const result = await pool.query(SQL, values);
+
+    res.status(200).json({
+      message: "Recipe updated succesfully",
+      urdatedRecipe: {
+        category,
+        recipe_name,
+        first_ingredient,
+        second_ingredient,
+        third_ingredient,
+        ...(fourth_ingredient !== null &&
+          fourth_ingredient !== undefined && { fourth_ingredient }),
+        ...(fifth_ingredient !== null &&
+          fifth_ingredient !== undefined && { fifth_ingredient }),
+        cooking_time,
+        description,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Server error at /updateRecipe endpoint", err);
   }
 };
