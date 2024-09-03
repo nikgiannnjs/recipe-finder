@@ -232,6 +232,12 @@ exports.updateRecipe = async (req, res) => {
       description,
     } = req.body;
 
+    if (!email) {
+      res.statu(400).json({
+        message: "Email is not provided",
+      });
+    }
+
     await ifAdmin(req, res, email, async () => {
       const SQL =
         "UPDATE recipes SET category = $1 , recipe_name = $2 , first_ingredient = $3 , second_ingredient = $4 , third_ingredient = $5 , fourth_ingredient = $6 , fifth_ingredient = $7 , cooking_time = $8 , description = $9 WHERE recipe_id = $10";
@@ -272,6 +278,35 @@ exports.updateRecipe = async (req, res) => {
       message: "Something went wrong with the server. Please try again later",
     });
 
-    console.error("Server error at /updateRecipe endpoint", error);
+    console.error("Server error at /updateRecipe endpoint", err);
+  }
+};
+
+exports.deleteRecipe = async (req, res) => {
+  try {
+    const recipe_id = req.params.id;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is not provided",
+      });
+    }
+
+    await ifAdmin(req, res, email, async () => {
+      const SQL = "DELETE FROM recipes WHERE recipe_id = $1";
+
+      const result = await pool.query(SQL, [recipe_id]);
+
+      res.status(200).json({
+        message: "Recipe deleted succesfully",
+      });
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Server error at /deleteRecipe endpoint", err);
   }
 };

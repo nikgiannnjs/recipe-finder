@@ -12,6 +12,6 @@ router.get("/findrecipe", recipeControllers.findRecipe);
 
 router.post("/updaterecipe/:id", recipeControllers.updateRecipe);
 
-//delete recipe only if admin
+router.delete("/deleterecipe/:id", recipeControllers.deleteRecipe);
 
 module.exports = router;
