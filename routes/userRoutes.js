@@ -12,7 +12,7 @@ router.post("/updatemyrecipe/:id", userControllers.updateMyRecipe);
 
 //favourites
 
-//get all users(only if admin)
+router.get("/getallusers", userControllers.getAllUsers);
 
 //delete users(only if admin)
 module.exports = router;

@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require("../dbconnection");
 const { correctFormats } = require("../middlewares/formatCorrection");
 const { numberOfIngs } = require("../middlewares/numberOfIngredientsCheck");
+const { ifAdmin } = require("../middlewares/ifAdmin");
 
 exports.addMyRecipe = async (req, res) => {
   try {
@@ -254,4 +255,27 @@ exports.updateMyRecipe = async (req, res) => {
 
     console.error("Server error at /updateMyRecipe endpoint", err);
   }
+};
+
+exports.getAllUsers = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      message: "Email is not provided",
+    });
+  }
+
+  await ifAdmin(req, res, email, async () => {
+    const SQL =
+      "SELECT user_id , first_name , last_name , email , admin_state FROM users";
+
+    const result = await pool.query(SQL, []);
+
+    const allUsers = result.rows;
+
+    return res.status(200).json({
+      allUsers,
+    });
+  });
 };
