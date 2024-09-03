@@ -279,3 +279,32 @@ exports.getAllUsers = async (req, res) => {
     });
   });
 };
+
+exports.deleteUser = async (req, res) => {
+  const { email } = req.body;
+  const userId = req.params.id;
+
+  if (!email) {
+    return res.status(400).json({
+      message: "Email is not provided",
+    });
+  }
+
+  await ifAdmin(req, res, email, async () => {
+    const validUserSQL = "SELECT * FROM users WHERE user_id = $1";
+    const user = await pool.query(validUserSQL, [userId]);
+
+    if (user.rows.length === 0) {
+      return res.status(400).json({
+        message: "User does not exist.",
+      });
+    }
+
+    const SQL = "DELETE FROM users WHERE user_id = $1";
+    const userToDelete = await pool.query(SQL, [userId]);
+
+    return res.status(200).json({
+      message: "User deleted successfully",
+    });
+  });
+};

@@ -14,5 +14,6 @@ router.post("/updatemyrecipe/:id", userControllers.updateMyRecipe);
 
 router.get("/getallusers", userControllers.getAllUsers);
 
-//delete users(only if admin)
+router.delete("/deleteuser/:id", userControllers.deleteUser);
+
 module.exports = router;

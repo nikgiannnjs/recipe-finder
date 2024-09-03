@@ -233,7 +233,7 @@ exports.updateRecipe = async (req, res) => {
     } = req.body;
 
     if (!email) {
-      res.statu(400).json({
+      res.status(400).json({
         message: "Email is not provided",
       });
     }
@@ -255,6 +255,12 @@ exports.updateRecipe = async (req, res) => {
       ];
 
       const result = await pool.query(SQL, values);
+
+      if (result.rows.length === 0) {
+        return res.status(400).json({
+          message: "Recipe does not exist.",
+        });
+      }
 
       res.status(200).json({
         message: "Recipe updated succesfully",
@@ -296,7 +302,13 @@ exports.deleteRecipe = async (req, res) => {
     await ifAdmin(req, res, email, async () => {
       const SQL = "DELETE FROM recipes WHERE recipe_id = $1";
 
-      const result = await pool.query(SQL, [recipe_id]);
+      const recipeToDelete = await pool.query(SQL, [recipe_id]);
+
+      if (recipeToDelete.rows.length === 0) {
+        return res.status(400).json({
+          message: "Recipe does not exist. Please provide a valid recipe id.",
+        });
+      }
 
       res.status(200).json({
         message: "Recipe deleted succesfully",
