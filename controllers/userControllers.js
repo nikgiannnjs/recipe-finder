@@ -2,9 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../dbconnection");
 const { correctFormats } = require("../middlewares/formatCorrection");
-const {
-  numberOfIngsCheck,
-} = require("../middlewares/numberOfIngredientsCheck");
+const { numberOfIngs } = require("../middlewares/numberOfIngredientsCheck");
 
 exports.addMyRecipe = async (req, res) => {
   try {
@@ -72,7 +70,7 @@ exports.addMyRecipe = async (req, res) => {
       });
     }
 
-    const sum = await numberOfIngsCheck(
+    const sum = await numberOfIngs(
       correctFirstIngredient,
       correctSecondIngredient,
       correctThirdIngredient,

@@ -1,4 +1,4 @@
-exports.numberOfIngsCheck = async (
+exports.numberOfIngs = async (
   firstIng,
   secondIng,
   thirdIng,
