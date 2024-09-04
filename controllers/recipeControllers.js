@@ -3,45 +3,18 @@ const pool = require("../dbconnection");
 const { correctFormats } = require("../middlewares/formatCorrection");
 const { numberOfIngs } = require("../middlewares/numberOfIngredientsCheck");
 const { ifAdmin } = require("../middlewares/ifAdmin");
+const { nullIngs } = require("../middlewares/nullIngs");
 
 exports.allRecipes = async (req, res) => {
   try {
     const SQL =
       "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description FROM recipes";
 
-    const result = await pool.query(SQL, []);
+    const recipes = await pool.query(SQL, []);
 
-    const processedRecipes = result.rows.map(
-      ({
-        category,
-        recipe_name,
-        first_ingredient,
-        second_ingredient,
-        third_ingredient,
-        fourth_ingredient,
-        fifth_ingredient,
-        cooking_time,
-        description,
-      }) => {
-        const recipe = {
-          category,
-          recipe_name,
-          first_ingredient,
-          second_ingredient,
-          third_ingredient,
-          fourth_ingredient:
-            fourth_ingredient !== null ? fourth_ingredient : undefined,
-          fifth_ingredient:
-            fifth_ingredient !== null ? fifth_ingredient : undefined,
-          cooking_time,
-          description,
-        };
+    recipes.rows = await nullIngs(recipes);
 
-        return recipe;
-      }
-    );
-
-    res.status(200).json(processedRecipes);
+    res.status(200).json(recipes.rows);
   } catch (err) {
     res.status(501).json({
       message: "Something went wrong with the server. Please try again later",
@@ -239,44 +212,57 @@ exports.updateRecipe = async (req, res) => {
     }
 
     await ifAdmin(req, res, email, async () => {
-      const SQL =
-        "UPDATE recipes SET category = $1 , recipe_name = $2 , first_ingredient = $3 , second_ingredient = $4 , third_ingredient = $5 , fourth_ingredient = $6 , fifth_ingredient = $7 , cooking_time = $8 , description = $9 WHERE recipe_id = $10";
-      const values = [
+      const checkSQL = "SELECT * FROM recipes WHERE recipe_id = $1";
+      const validRecipe = await pool.query(checkSQL, [recipe_id]);
+
+      if (validRecipe.rows.length === 0) {
+        return res.status(200).json({
+          message: "Invalid recipe id",
+        });
+      }
+      const {
+        correctCategory,
+        correctRecipeName,
+        correctFirstIngredient,
+        correctSecondIngredient,
+        correctThirdIngredient,
+        correctFourthIngredient,
+        correctFifthIngredient,
+      } = await correctFormats(
         category,
         recipe_name,
         first_ingredient,
         second_ingredient,
         third_ingredient,
         fourth_ingredient,
-        fifth_ingredient,
+        fifth_ingredient
+      );
+
+      const SQL =
+        "UPDATE recipes SET category = $1 , recipe_name = $2 , first_ingredient = $3 , second_ingredient = $4 , third_ingredient = $5 , fourth_ingredient = $6 , fifth_ingredient = $7 , cooking_time = $8 , description = $9 , updated_at = CURRENT_TIMESTAMP WHERE recipe_id = $10";
+      const values = [
+        correctCategory,
+        correctRecipeName,
+        correctFirstIngredient,
+        correctSecondIngredient,
+        correctThirdIngredient,
+        correctFourthIngredient,
+        correctFifthIngredient,
         cooking_time,
         description,
         recipe_id,
       ];
 
-      const result = await pool.query(SQL, values);
+      await pool.query(SQL, values);
 
-      if (result.rows.length === 0) {
-        return res.status(400).json({
-          message: "Recipe does not exist.",
-        });
-      }
+      const newSQL = "SELECT * FROM recipes WHERE recipe_id = $1";
+      const updatedRecipe = await pool.query(newSQL, [recipe_id]);
+
+      updatedRecipe.rows = await nullIngs(updatedRecipe);
 
       res.status(200).json({
         message: "Recipe updated succesfully",
-        updatedRecipe: {
-          category,
-          recipe_name,
-          first_ingredient,
-          second_ingredient,
-          third_ingredient,
-          ...(fourth_ingredient !== null &&
-            fourth_ingredient !== undefined && { fourth_ingredient }),
-          ...(fifth_ingredient !== null &&
-            fifth_ingredient !== undefined && { fifth_ingredient }),
-          cooking_time,
-          description,
-        },
+        updatedRecipe: updatedRecipe.rows,
       });
     });
   } catch (err) {
@@ -320,5 +306,32 @@ exports.deleteRecipe = async (req, res) => {
     });
 
     console.error("Server error at /deleteRecipe endpoint", err);
+  }
+};
+
+exports.recipeSearch = async (req, res) => {
+  try {
+    const query = req.query.q;
+
+    const SQL =
+      "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient , cooking_time , description FROM recipes WHERE recipe_name ILIKE $1";
+
+    const recipe = await pool.query(SQL, [`%${query}%`]);
+
+    if (recipe.rows.length === 0) {
+      res.status(400).json({
+        message: "No results found",
+      });
+    } else {
+      recipe.rows = await nullIngs(recipe);
+
+      res.status(200).json(recipe.rows);
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Server error at /search endpoint", err);
   }
 };

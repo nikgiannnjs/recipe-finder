@@ -4,6 +4,7 @@ const pool = require("../dbconnection");
 const { correctFormats } = require("../middlewares/formatCorrection");
 const { numberOfIngs } = require("../middlewares/numberOfIngredientsCheck");
 const { ifAdmin } = require("../middlewares/ifAdmin");
+const { nullIngs } = require("../middlewares/nullIngs");
 
 exports.addMyRecipe = async (req, res) => {
   try {
@@ -130,37 +131,9 @@ exports.myRecipes = async (req, res) => {
       "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description FROM recipes WHERE created_by = $1";
     const myRecipes = await pool.query(SQL, [email]);
 
-    const processedRecipes = myRecipes.rows.map(
-      ({
-        category,
-        recipe_name,
-        first_ingredient,
-        second_ingredient,
-        third_ingredient,
-        fourth_ingredient,
-        fifth_ingredient,
-        cooking_time,
-        description,
-      }) => {
-        const recipe = {
-          category,
-          recipe_name,
-          first_ingredient,
-          second_ingredient,
-          third_ingredient,
-          fourth_ingredient:
-            fourth_ingredient !== null ? fourth_ingredient : undefined,
-          fifth_ingredient:
-            fifth_ingredient !== null ? fifth_ingredient : undefined,
-          cooking_time,
-          description,
-        };
+    myRecipes.rows = await nullIngs(myRecipes);
 
-        return recipe;
-      }
-    );
-
-    res.status(200).json(processedRecipes);
+    res.status(200).json(myRecipes.rows);
   } catch (err) {
     res.status(500).json({
       message: "Something went wrong with the server. Please try again later",
@@ -186,6 +159,12 @@ exports.updateMyRecipe = async (req, res) => {
       cooking_time,
       description,
     } = req.body;
+
+    if (!email) {
+      res.status(400).json({
+        message: "Email is not provided",
+      });
+    }
 
     const checkSQL = "SELECT created_by FROM recipes WHERE recipe_id = $1";
 
@@ -216,7 +195,7 @@ exports.updateMyRecipe = async (req, res) => {
     );
 
     const SQL =
-      "UPDATE recipes SET category = $1 , recipe_name = $2 , first_ingredient = $3 , second_ingredient = $4 , third_ingredient = $5 , fourth_ingredient = $6 , fifth_ingredient = $7 , cooking_time = $8 , description = $9 WHERE recipe_id = $10";
+      "UPDATE recipes SET category = $1 , recipe_name = $2 , first_ingredient = $3 , second_ingredient = $4 , third_ingredient = $5 , fourth_ingredient = $6 , fifth_ingredient = $7 , cooking_time = $8 , description = $9 , updated_at = CURRENT_TIMESTAMP WHERE recipe_id = $10";
     const values = [
       correctCategory,
       correctRecipeName,
@@ -230,23 +209,17 @@ exports.updateMyRecipe = async (req, res) => {
       recipe_id,
     ];
 
-    const result = await pool.query(SQL, values);
+    await pool.query(SQL, values);
+
+    const newSQL = "SELECT * FROM recipes WHERE recipe_id = $1";
+
+    const updatedRecipe = await pool.query(newSQL, [recipe_id]);
+
+    updatedRecipe.rows = await nullIngs(updatedRecipe);
 
     res.status(200).json({
       message: "Recipe updated succesfully",
-      updatedRecipe: {
-        correctCategory,
-        correctRecipeName,
-        correctFirstIngredient,
-        correctSecondIngredient,
-        correctThirdIngredient,
-        ...(correctFourthIngredient !== null &&
-          correctFourthIngredient !== undefined && { correctFourthIngredient }),
-        ...(correctFifthIngredient !== null &&
-          correctFifthIngredient !== undefined && { correctFifthIngredient }),
-        cooking_time,
-        description,
-      },
+      updatedRecipe: updatedRecipe.rows,
     });
   } catch (err) {
     res.status(500).json({

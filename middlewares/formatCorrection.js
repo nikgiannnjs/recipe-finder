@@ -7,23 +7,29 @@ exports.correctFormats = async (
   fourth_ingredient,
   fifth_ingredient
 ) => {
-  const correctCategory = category.charAt(0).toUpperCase() + category.slice(1);
+  const correctCategory =
+    category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
   const correctRecipeName =
-    recipe_name.charAt(0).toUpperCase() + recipe_name.slice(1);
+    recipe_name.charAt(0).toUpperCase() + recipe_name.slice(1).toLowerCase();
   const correctFirstIngredient = first_ingredient
-    ? first_ingredient.charAt(0).toUpperCase() + first_ingredient.slice(1)
+    ? first_ingredient.charAt(0).toUpperCase() +
+      first_ingredient.slice(1).toLowerCase()
     : null;
   const correctSecondIngredient = second_ingredient
-    ? second_ingredient.charAt(0).toUpperCase() + second_ingredient.slice(1)
+    ? second_ingredient.charAt(0).toUpperCase() +
+      second_ingredient.slice(1).toLowerCase()
     : null;
   const correctThirdIngredient = third_ingredient
-    ? third_ingredient.charAt(0).toUpperCase() + third_ingredient.slice(1)
+    ? third_ingredient.charAt(0).toUpperCase() +
+      third_ingredient.slice(1).toLowerCase()
     : null;
   const correctFourthIngredient = fourth_ingredient
-    ? fourth_ingredient.charAt(0).toUpperCase() + fourth_ingredient.slice(1)
+    ? fourth_ingredient.charAt(0).toUpperCase() +
+      fourth_ingredient.slice(1).toLowerCase()
     : null;
   const correctFifthIngredient = fifth_ingredient
-    ? fifth_ingredient.charAt(0).toUpperCase() + fifth_ingredient.slice(1)
+    ? fifth_ingredient.charAt(0).toUpperCase() +
+      fifth_ingredient.slice(1).toLowerCase()
     : null;
 
   return {

@@ -14,4 +14,6 @@ router.post("/updaterecipe/:id", recipeControllers.updateRecipe);
 
 router.delete("/deleterecipe/:id", recipeControllers.deleteRecipe);
 
+router.get("/search", recipeControllers.recipeSearch);
+
 module.exports = router;
