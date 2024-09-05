@@ -4,6 +4,7 @@ const { correctFormats } = require("../middlewares/formatCorrection");
 const { numberOfIngs } = require("../middlewares/numberOfIngredientsCheck");
 const { ifAdmin } = require("../middlewares/ifAdmin");
 const { nullIngs } = require("../middlewares/nullIngs");
+const { validRecipe } = require("../middlewares/validRecipe");
 
 exports.allRecipes = async (req, res) => {
   try {
@@ -284,20 +285,15 @@ exports.deleteRecipe = async (req, res) => {
         message: "Email is not provided",
       });
     }
+    await validRecipe(req, res, recipe_id, async () => {
+      await ifAdmin(req, res, email, async () => {
+        const SQL = "DELETE FROM recipes WHERE recipe_id = $1";
 
-    await ifAdmin(req, res, email, async () => {
-      const SQL = "DELETE FROM recipes WHERE recipe_id = $1";
+        const recipeToDelete = await pool.query(SQL, [recipe_id]);
 
-      const recipeToDelete = await pool.query(SQL, [recipe_id]);
-
-      if (recipeToDelete.rows.length === 0) {
-        return res.status(400).json({
-          message: "Recipe does not exist. Please provide a valid recipe id.",
+        res.status(200).json({
+          message: "Recipe deleted succesfully",
         });
-      }
-
-      res.status(200).json({
-        message: "Recipe deleted succesfully",
       });
     });
   } catch (err) {

@@ -12,7 +12,7 @@ router.post("/updatemyrecipe/:id", userControllers.updateMyRecipe);
 
 router.post("/addtofavourites/:id", userControllers.addToFavourites);
 
-//get my favourites
+router.get("/myfavourites", userControllers.myFavourites);
 
 //delete from favourites
 

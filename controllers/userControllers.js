@@ -320,3 +320,44 @@ exports.addToFavourites = async (req, res) => {
     console.error("Server error at /addtofavourites endpoint", err);
   }
 };
+
+exports.myFavourites = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const SQL = "SELECT recipe_id FROM favourites WHERE email = $1";
+    const result = await pool.query(SQL, [email]);
+
+    const recipeIds = result.rows.map((row) => row.recipe_id);
+
+    if (recipeIds.length === 0) {
+      return res.status(200).json({
+        message: "No favourites yet.",
+        favourites: [],
+      });
+    }
+
+    const placeholders = recipeIds
+      .map((_, index) => `($${index + 1})`)
+      .join(", ");
+
+    const nextSQL = `
+      SELECT category, recipe_name, first_ingredient, second_ingredient,
+             third_ingredient, fourth_ingredient, fifth_ingredient,
+             cooking_time, description
+      FROM recipes
+      WHERE recipe_id IN (${placeholders})
+    `;
+    const favouriteRecipes = await pool.query(nextSQL, recipeIds);
+
+    favouriteRecipes.rows = await nullIngs(favouriteRecipes);
+
+    res.status(200).json(favouriteRecipes.rows);
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Server error at /myFavourites endpoint", err);
+  }
+};
