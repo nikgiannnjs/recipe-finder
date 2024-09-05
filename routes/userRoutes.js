@@ -10,7 +10,11 @@ router.get("/myrecipes", userControllers.myRecipes);
 
 router.post("/updatemyrecipe/:id", userControllers.updateMyRecipe);
 
-//favourites
+router.post("/addtofavourites/:id", userControllers.addToFavourites);
+
+//get my favourites
+
+//delete from favourites
 
 router.get("/getallusers", userControllers.getAllUsers);
 

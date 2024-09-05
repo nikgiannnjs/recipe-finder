@@ -5,6 +5,7 @@ const { correctFormats } = require("../middlewares/formatCorrection");
 const { numberOfIngs } = require("../middlewares/numberOfIngredientsCheck");
 const { ifAdmin } = require("../middlewares/ifAdmin");
 const { nullIngs } = require("../middlewares/nullIngs");
+const { validRecipe } = require("../middlewares/validRecipe");
 
 exports.addMyRecipe = async (req, res) => {
   try {
@@ -231,53 +232,91 @@ exports.updateMyRecipe = async (req, res) => {
 };
 
 exports.getAllUsers = async (req, res) => {
-  const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-  if (!email) {
-    return res.status(400).json({
-      message: "Email is not provided",
-    });
-  }
-
-  await ifAdmin(req, res, email, async () => {
-    const SQL =
-      "SELECT user_id , first_name , last_name , email , admin_state FROM users";
-
-    const result = await pool.query(SQL, []);
-
-    const allUsers = result.rows;
-
-    return res.status(200).json({
-      allUsers,
-    });
-  });
-};
-
-exports.deleteUser = async (req, res) => {
-  const { email } = req.body;
-  const userId = req.params.id;
-
-  if (!email) {
-    return res.status(400).json({
-      message: "Email is not provided",
-    });
-  }
-
-  await ifAdmin(req, res, email, async () => {
-    const validUserSQL = "SELECT * FROM users WHERE user_id = $1";
-    const user = await pool.query(validUserSQL, [userId]);
-
-    if (user.rows.length === 0) {
+    if (!email) {
       return res.status(400).json({
-        message: "User does not exist.",
+        message: "Email is not provided",
       });
     }
 
-    const SQL = "DELETE FROM users WHERE user_id = $1";
-    const userToDelete = await pool.query(SQL, [userId]);
+    await ifAdmin(req, res, email, async () => {
+      const SQL =
+        "SELECT user_id , first_name , last_name , email , admin_state FROM users";
 
-    return res.status(200).json({
-      message: "User deleted successfully",
+      const result = await pool.query(SQL, []);
+
+      const allUsers = result.rows;
+
+      return res.status(200).json({
+        allUsers,
+      });
     });
-  });
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Server error at /getallusers endpoint", err);
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const userId = req.params.id;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is not provided",
+      });
+    }
+
+    await ifAdmin(req, res, email, async () => {
+      const validUserSQL = "SELECT * FROM users WHERE user_id = $1";
+      const user = await pool.query(validUserSQL, [userId]);
+
+      if (user.rows.length === 0) {
+        return res.status(400).json({
+          message: "User does not exist.",
+        });
+      }
+
+      const SQL = "DELETE FROM users WHERE user_id = $1";
+      const userToDelete = await pool.query(SQL, [userId]);
+
+      return res.status(200).json({
+        message: "User deleted successfully",
+      });
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Server error at /deleteuser endpoint", err);
+  }
+};
+
+exports.addToFavourites = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const recipe_id = req.params.id;
+
+    await validRecipe(req, res, recipe_id, async () => {
+      const SQL = "INSERT INTO favourites (email , recipe_id) VALUES ($1 , $2)";
+      const result = await pool.query(SQL, [email, recipe_id]);
+
+      res.status(200).json({
+        message: "Recipe added to favourites successfully.",
+      });
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error("Server error at /addtofavourites endpoint", err);
+  }
 };
