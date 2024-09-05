@@ -14,7 +14,7 @@ router.post("/addtofavourites/:id", userControllers.addToFavourites);
 
 router.get("/myfavourites", userControllers.myFavourites);
 
-//delete from favourites
+router.delete("/deletefavourites/:id", userControllers.deleteFromFavourites);
 
 router.get("/getallusers", userControllers.getAllUsers);
 

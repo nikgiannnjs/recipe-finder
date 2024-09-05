@@ -361,3 +361,27 @@ exports.myFavourites = async (req, res) => {
     console.error("Server error at /myFavourites endpoint", err);
   }
 };
+
+exports.deleteFromFavourites = async (req, res) => {
+  const { email } = req.body;
+  const recipe_id = req.params.id;
+
+  if (!email) {
+    return res.status(400).json({
+      message: "Email is not provided",
+    });
+  }
+
+  if (!recipe_id) {
+    return res.status(400).json({
+      message: "Id is not provided",
+    });
+  }
+
+  const SQL = "DELETE FROM favourites WHERE email = $1 AND recipe_id = $2";
+  const deleteRecipe = await pool.query(SQL, [email, recipe_id]);
+
+  res.status(200).json({
+    message: "Reciped deleted from favourites successfully.",
+  });
+};
