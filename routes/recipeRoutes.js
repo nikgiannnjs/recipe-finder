@@ -6,7 +6,7 @@ const recipeControllers = require("../controllers/recipeControllers");
 
 router.get("/allrecipes", recipeControllers.allRecipes);
 
-router.post("/addnewrecipeadminsonly", recipeControllers.addNewRecipeAdmins);
+router.post("/addnewrecipe/:id", recipeControllers.addNewRecipe);
 
 router.get("/findrecipe", recipeControllers.findRecipe);
 

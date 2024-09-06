@@ -1,6 +1,7 @@
 exports.nullIngs = async (Obj) => {
   return Obj.rows.map(
     ({
+      recipe_id,
       category,
       recipe_name,
       first_ingredient,
@@ -12,6 +13,7 @@ exports.nullIngs = async (Obj) => {
       description,
     }) => {
       return {
+        recipe_id,
         category,
         recipe_name,
         first_ingredient,

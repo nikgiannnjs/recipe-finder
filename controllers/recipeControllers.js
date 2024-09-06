@@ -5,11 +5,12 @@ const { numberOfIngs } = require("../middlewares/numberOfIngredientsCheck");
 const { ifAdmin } = require("../middlewares/ifAdmin");
 const { nullIngs } = require("../middlewares/nullIngs");
 const { validRecipe } = require("../middlewares/validRecipe");
+const { adminState } = require("../middlewares/adminState");
 
 exports.allRecipes = async (req, res) => {
   try {
     const SQL =
-      "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description FROM recipes";
+      "SELECT recipe_id , category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description FROM recipes";
 
     const recipes = await pool.query(SQL, []);
 
@@ -25,10 +26,9 @@ exports.allRecipes = async (req, res) => {
   }
 };
 
-exports.addNewRecipeAdmins = async (req, res) => {
+exports.addNewRecipe = async (req, res) => {
   try {
     const {
-      email,
       category,
       recipe_name,
       first_ingredient,
@@ -40,12 +40,13 @@ exports.addNewRecipeAdmins = async (req, res) => {
       description,
     } = req.body;
 
-    const adminCheckSQL = "SELECT admin_state FROM users WHERE email = $1";
-    const admin = await pool.query(adminCheckSQL, [email]);
+    const user_id = req.params.id;
 
-    if (admin.rows.length === 0 || admin.rows[0].admin_state === false) {
+    const usercheckSQL = "SELECT * FROM users WHERE user_id = $1";
+    const existingUser = await pool.query(usercheckSQL, [user_id]);
+    if (existingUser.rows.length === 0) {
       return res.status(400).json({
-        messsage: "Access denied. Admins only",
+        message: "The user does not exist.",
       });
     }
 
@@ -79,14 +80,12 @@ exports.addNewRecipeAdmins = async (req, res) => {
       });
     }
 
-    //Check if body has a category
     if (!correctCategory) {
       return res.status(400).json({
         message: "Providing a category is mandatory.",
       });
     }
 
-    //Check if body has a recipe name
     if (!correctRecipeName) {
       return res.status(400).json({
         message: "Providing a recipe name is mandatory.",
@@ -119,9 +118,10 @@ exports.addNewRecipeAdmins = async (req, res) => {
       });
     }
 
-    const created_by = "admin";
+    const created_by = await adminState(user_id);
+
     const SQL =
-      "INSERT INTO recipes (category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description , created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 , $10)";
+      "INSERT INTO recipes (category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING recipe_id";
     const result = await pool.query(SQL, [
       correctCategory,
       correctRecipeName,
@@ -135,13 +135,18 @@ exports.addNewRecipeAdmins = async (req, res) => {
       created_by,
     ]);
 
-    res.status(201).json({ message: "Recipe added successfully" });
+    if (result.rowCount != 1) {
+      return res.status(400).json({ message: "Could not add recipe." });
+    }
+
+    res.status(200).json({ message: "Recipe added successfully" });
+    console.log(result.rows[0].recipe_id);
   } catch (err) {
     res.status(500).json({
       message: "Something went wrong with the server. Please try again later",
     });
 
-    console.error("Server error at /addnewrecipe endpoint", err);
+    console.error("Error at /addmyrecipe endpoint", err);
   }
 };
 
@@ -157,17 +162,17 @@ exports.findRecipe = async (req, res) => {
       });
     } else if (ingredients.length === 3) {
       SQL =
-        "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, cooking_time, description FROM recipes WHERE first_ingredient = $1 AND second_ingredient = $2 AND third_ingredient = $3";
+        "SELECT recipe_id , category, recipe_name, first_ingredient, second_ingredient, third_ingredient, cooking_time, description FROM recipes WHERE first_ingredient = $1 AND second_ingredient = $2 AND third_ingredient = $3";
 
       recipe = await pool.query(SQL, ingredients);
     } else if (ingredients.length === 4) {
       SQL =
-        "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, cooking_time, description FROM recipes WHERE first_ingredient = $1 AND second_ingredient = $2 AND third_ingredient = $3 AND fourth_ingredient = $4";
+        "SELECT recipe_ id , category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, cooking_time, description FROM recipes WHERE first_ingredient = $1 AND second_ingredient = $2 AND third_ingredient = $3 AND fourth_ingredient = $4";
 
       recipe = await pool.query(SQL, ingredients);
     } else if (ingredients.length === 5) {
       SQL =
-        "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description FROM recipes WHERE first_ingredient = $1 AND second_ingredient = $2 AND third_ingredient = $3 AND fourth_ingredient = $4 AND fifth_ingredient = $5";
+        "SELECT recipe_id , category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description FROM recipes WHERE first_ingredient = $1 AND second_ingredient = $2 AND third_ingredient = $3 AND fourth_ingredient = $4 AND fifth_ingredient = $5";
 
       recipe = await pool.query(SQL, ingredients);
     }
@@ -192,9 +197,9 @@ exports.findRecipe = async (req, res) => {
 exports.updateRecipe = async (req, res) => {
   try {
     const recipe_id = req.params.id;
+    const { user_id } = req.query;
 
     const {
-      email,
       category,
       recipe_name,
       first_ingredient,
@@ -206,13 +211,15 @@ exports.updateRecipe = async (req, res) => {
       description,
     } = req.body;
 
-    if (!email) {
-      res.status(400).json({
-        message: "Email is not provided",
+    const usercheckSQL = "SELECT * FROM users WHERE user_id = $1";
+    const existingUser = await pool.query(usercheckSQL, [user_id]);
+    if (existingUser.rows.length === 0) {
+      return res.status(400).json({
+        message: "The user does not exist.",
       });
     }
 
-    await ifAdmin(req, res, email, async () => {
+    await ifAdmin(req, res, user_id, async () => {
       const checkSQL = "SELECT * FROM recipes WHERE recipe_id = $1";
       const validRecipe = await pool.query(checkSQL, [recipe_id]);
 
@@ -278,15 +285,18 @@ exports.updateRecipe = async (req, res) => {
 exports.deleteRecipe = async (req, res) => {
   try {
     const recipe_id = req.params.id;
-    const { email } = req.body;
+    const { user_id } = req.query;
 
-    if (!email) {
+    const usercheckSQL = "SELECT * FROM users WHERE user_id = $1";
+    const existingUser = await pool.query(usercheckSQL, [user_id]);
+    if (existingUser.rows.length === 0) {
       return res.status(400).json({
-        message: "Email is not provided",
+        message: "The user does not exist.",
       });
     }
+
     await validRecipe(req, res, recipe_id, async () => {
-      await ifAdmin(req, res, email, async () => {
+      await ifAdmin(req, res, user_id, async () => {
         const SQL = "DELETE FROM recipes WHERE recipe_id = $1";
 
         const recipeToDelete = await pool.query(SQL, [recipe_id]);
@@ -310,7 +320,7 @@ exports.recipeSearch = async (req, res) => {
     const query = req.query.q;
 
     const SQL =
-      "SELECT category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient , cooking_time , description FROM recipes WHERE recipe_name ILIKE $1";
+      "SELECT recipe_id , category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient , cooking_time , description FROM recipes WHERE recipe_name ILIKE $1";
 
     const recipe = await pool.query(SQL, [`%${query}%`]);
 

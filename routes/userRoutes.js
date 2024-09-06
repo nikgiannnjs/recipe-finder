@@ -4,19 +4,17 @@ const router = express.Router();
 const pool = require("../dbconnection");
 const userControllers = require("../controllers/userControllers");
 
-router.post("/addmyrecipe", userControllers.addMyRecipe);
-
-router.get("/myrecipes", userControllers.myRecipes);
+router.get("/myrecipes/:id", userControllers.myRecipes);
 
 router.post("/updatemyrecipe/:id", userControllers.updateMyRecipe);
 
 router.post("/addtofavourites/:id", userControllers.addToFavourites);
 
-router.get("/myfavourites", userControllers.myFavourites);
+router.get("/favourites/:id", userControllers.myFavourites);
 
 router.delete("/deletefavourites/:id", userControllers.deleteFromFavourites);
 
-router.get("/getallusers", userControllers.getAllUsers);
+router.get("/getallusers/:id", userControllers.getAllUsers);
 
 router.delete("/deleteuser/:id", userControllers.deleteUser);
 
