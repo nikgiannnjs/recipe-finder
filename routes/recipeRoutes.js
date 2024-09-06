@@ -12,6 +12,8 @@ router.get("/findrecipe", recipeControllers.findRecipe);
 
 router.post("/updaterecipe/:id", recipeControllers.updateRecipe);
 
+router.get("/myrecipes/:id", recipeControllers.myRecipes);
+
 router.delete("/deleterecipe/:id", recipeControllers.deleteRecipe);
 
 router.get("/search", recipeControllers.recipeSearch);

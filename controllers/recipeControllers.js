@@ -211,74 +211,99 @@ exports.updateRecipe = async (req, res) => {
       description,
     } = req.body;
 
-    const usercheckSQL = "SELECT * FROM users WHERE user_id = $1";
-    const existingUser = await pool.query(usercheckSQL, [user_id]);
-    if (existingUser.rows.length === 0) {
+    const newUserId = await adminState(user_id);
+
+    const checkSQL = "SELECT created_by FROM recipes WHERE recipe_id = $1";
+
+    const result = await pool.query(checkSQL, [recipe_id]);
+
+    if (newUserId != result.rows[0].created_by) {
       return res.status(400).json({
-        message: "The user does not exist.",
+        message: "You cannot update this recipe.",
       });
     }
 
-    await ifAdmin(req, res, user_id, async () => {
-      const checkSQL = "SELECT * FROM recipes WHERE recipe_id = $1";
-      const validRecipe = await pool.query(checkSQL, [recipe_id]);
+    const {
+      correctCategory,
+      correctRecipeName,
+      correctFirstIngredient,
+      correctSecondIngredient,
+      correctThirdIngredient,
+      correctFourthIngredient,
+      correctFifthIngredient,
+    } = await correctFormats(
+      category,
+      recipe_name,
+      first_ingredient,
+      second_ingredient,
+      third_ingredient,
+      fourth_ingredient,
+      fifth_ingredient
+    );
 
-      if (validRecipe.rows.length === 0) {
-        return res.status(200).json({
-          message: "Invalid recipe id",
-        });
-      }
-      const {
-        correctCategory,
-        correctRecipeName,
-        correctFirstIngredient,
-        correctSecondIngredient,
-        correctThirdIngredient,
-        correctFourthIngredient,
-        correctFifthIngredient,
-      } = await correctFormats(
-        category,
-        recipe_name,
-        first_ingredient,
-        second_ingredient,
-        third_ingredient,
-        fourth_ingredient,
-        fifth_ingredient
-      );
+    const SQL =
+      "UPDATE recipes SET category = $1 , recipe_name = $2 , first_ingredient = $3 , second_ingredient = $4 , third_ingredient = $5 , fourth_ingredient = $6 , fifth_ingredient = $7 , cooking_time = $8 , description = $9 , updated_at = CURRENT_TIMESTAMP WHERE recipe_id = $10";
+    const values = [
+      correctCategory,
+      correctRecipeName,
+      correctFirstIngredient,
+      correctSecondIngredient,
+      correctThirdIngredient,
+      correctFourthIngredient,
+      correctFifthIngredient,
+      cooking_time,
+      description,
+      recipe_id,
+    ];
 
-      const SQL =
-        "UPDATE recipes SET category = $1 , recipe_name = $2 , first_ingredient = $3 , second_ingredient = $4 , third_ingredient = $5 , fourth_ingredient = $6 , fifth_ingredient = $7 , cooking_time = $8 , description = $9 , updated_at = CURRENT_TIMESTAMP WHERE recipe_id = $10";
-      const values = [
-        correctCategory,
-        correctRecipeName,
-        correctFirstIngredient,
-        correctSecondIngredient,
-        correctThirdIngredient,
-        correctFourthIngredient,
-        correctFifthIngredient,
-        cooking_time,
-        description,
-        recipe_id,
-      ];
+    await pool.query(SQL, values);
 
-      await pool.query(SQL, values);
+    const newSQL = "SELECT * FROM recipes WHERE recipe_id = $1";
 
-      const newSQL = "SELECT * FROM recipes WHERE recipe_id = $1";
-      const updatedRecipe = await pool.query(newSQL, [recipe_id]);
+    const updatedRecipe = await pool.query(newSQL, [recipe_id]);
 
-      updatedRecipe.rows = await nullIngs(updatedRecipe);
+    updatedRecipe.rows = await nullIngs(updatedRecipe);
 
-      res.status(200).json({
-        message: "Recipe updated succesfully",
-        updatedRecipe: updatedRecipe.rows,
-      });
+    res.status(200).json({
+      message: "Recipe updated succesfully",
+      updatedRecipe: updatedRecipe.rows,
     });
   } catch (err) {
     res.status(500).json({
       message: "Something went wrong with the server. Please try again later",
     });
 
-    console.error("Server error at /updateRecipe endpoint", err);
+    console.error("Server error at /updateMyRecipe endpoint", err);
+  }
+};
+
+exports.myRecipes = async (req, res) => {
+  try {
+    const user_id = req.params.id;
+
+    const created_by = await adminState(user_id);
+
+    let toSearch;
+
+    if (created_by === "admin") {
+      toSearch = "admin";
+    } else {
+      toSearch = user_id;
+    }
+
+    const SQL =
+      "SELECT recipe_id, category, recipe_name, first_ingredient, second_ingredient, third_ingredient, fourth_ingredient, fifth_ingredient, cooking_time, description FROM recipes WHERE created_by = $1";
+    const myRecipes = await pool.query(SQL, [toSearch]);
+
+    myRecipes.rows = await nullIngs(myRecipes);
+
+    res.status(200).json(myRecipes.rows);
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later",
+    });
+
+    console.error(err);
   }
 };
 

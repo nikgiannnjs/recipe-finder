@@ -4,10 +4,6 @@ const router = express.Router();
 const pool = require("../dbconnection");
 const userControllers = require("../controllers/userControllers");
 
-router.get("/myrecipes/:id", userControllers.myRecipes);
-
-router.post("/updatemyrecipe/:id", userControllers.updateMyRecipe);
-
 router.post("/addtofavourites/:id", userControllers.addToFavourites);
 
 router.get("/favourites/:id", userControllers.myFavourites);
