@@ -1,5 +1,4 @@
-//Controllers that concern authRoutes (Signup, Login, Changepassword, Logout)
-const { pool } = require("../dbconnection");
+const pool = require("../dbconnection");
 const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -17,6 +16,18 @@ exports.signUp = async (req, res) => {
   try {
     const { firstName, lastName, email, password, passwordConfirm } = req.body;
 
+    if (!firstName || !lastName) {
+      return res.status(400).json({
+        message: "First name and last name are mandatory.",
+      });
+    }
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is mandatory.",
+      });
+    }
+
     const SQL = "SELECT * FROM users WHERE email = $1";
     const existingUser = await pool.query(SQL, [email]);
     if (existingUser.rows.length > 0) {
@@ -25,26 +36,52 @@ exports.signUp = async (req, res) => {
       });
     }
 
-    if (password != passwordConfirm) {
+    if (!password) {
       return res.status(400).json({
-        message:
-          "Password and password confirmation, are not the same. Please try again.",
-      });
-    } else {
-      const encryptedPassword = await bcrypt.hash(password, 10);
-      const insertSQL =
-        "INSERT INTO users (first_name, last_name, email, user_password) VALUES ($1, $2, $3, $4)";
-      const newUser = await pool.query(insertSQL, [
-        firstName,
-        lastName,
-        email,
-        encryptedPassword,
-      ]);
-
-      return res.status(200).json({
-        message: "User registered succesfully",
+        message: "Please provide a password.",
       });
     }
+
+    if (!passwordConfirm) {
+      return res.status(400).json({
+        message: "Please confirm your password.",
+      });
+    }
+
+    if (password != passwordConfirm) {
+      return res.status(400).json({
+        message: "Password and password confirmation, are not the same.",
+      });
+    }
+
+    const regex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>]).+$/;
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Password has to be at least 6 characters.",
+      });
+    }
+
+    if (!regex.test(password)) {
+      return res.status(400).json({
+        message:
+          "Password must contain at least an uppercase, a number and a special character.",
+      });
+    }
+
+    const encryptedPassword = await bcrypt.hash(password, 10);
+    const insertSQL =
+      "INSERT INTO users (first_name, last_name, email, user_password) VALUES ($1, $2, $3, $4)";
+    const newUser = await pool.query(insertSQL, [
+      firstName,
+      lastName,
+      email,
+      encryptedPassword,
+    ]);
+
+    return res.status(200).json({
+      message: "User registered succesfully",
+    });
   } catch (err) {
     res.status(500).json({
       message: "Something went wrong with the server. Please try again later",
