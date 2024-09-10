@@ -151,6 +151,12 @@ exports.changePassword = async (req, res) => {
   try {
     const { email, oldPassword, newPassword, newPasswordConfirm } = req.body;
 
+    if (!email) {
+      return res.status(400).json({
+        message: "Please provide an email",
+      });
+    }
+
     const validUserSQL = "SELECT * FROM users WHERE email =$1";
 
     const result = await pool.query(validUserSQL, [email]);
@@ -163,6 +169,12 @@ exports.changePassword = async (req, res) => {
 
     const user = result.rows[0];
 
+    if (!oldPassword) {
+      return res.status(400).json({
+        message: "Please provide your old password.",
+      });
+    }
+
     const validOldPassword = await bcrypt.compare(
       oldPassword,
       user.user_password
@@ -174,11 +186,33 @@ exports.changePassword = async (req, res) => {
       });
     }
 
+    if (!newPassword) {
+      return res.status(400).json({
+        message: "Please provide a new password.",
+      });
+    }
+
     if (newPassword != newPasswordConfirm) {
       return res.status(400).json({
         message: "Password and password confirmation are not the same.",
       });
     }
+
+    const regex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>]).+$/;
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "Password has to be at least 6 characters.",
+      });
+    }
+
+    if (!regex.test(newPassword)) {
+      return res.status(400).json({
+        message:
+          "Password must contain at least an uppercase, a number and a special character.",
+      });
+    }
+
     const encryptedNewPassword = await bcrypt.hash(newPassword, 10);
 
     const SQL =
