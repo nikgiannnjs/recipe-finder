@@ -235,6 +235,11 @@ exports.changePassword = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        message: "Please provide an email.",
+      });
+    }
 
     const user = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
@@ -269,11 +274,11 @@ exports.forgotPassword = async (req, res) => {
 
     await transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
+        console.error("Error sending email", error);
+
         return res.status(500).json({
           message: "Failed to send password reset email. Please try again.",
         });
-
-        console.error("Error sending email", error);
       } else {
         res.status(200).json({
           message: "A link has been sent to your email.",
