@@ -95,6 +95,18 @@ exports.logIn = async (req, res) => {
   try {
     const { email, user_password } = req.body;
 
+    if (!email) {
+      return res.status(400).json({
+        message: "Please provide an email.",
+      });
+    }
+
+    if (!user_password) {
+      return res.status(400).json({
+        message: "Please provide your password.",
+      });
+    }
+
     const validUserSQL = "SELECT * FROM users WHERE email =$1";
 
     const result = await pool.query(validUserSQL, [email]);
