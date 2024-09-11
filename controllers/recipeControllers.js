@@ -118,6 +118,17 @@ exports.addNewRecipe = async (req, res) => {
       });
     }
 
+    const ifItExists = await pool.query(
+      "SELECT * FROM recipes WHERE recipe_name = $1",
+      [correctRecipeName]
+    );
+
+    if (ifItExists.rows.length != 0) {
+      return res.status(400).json({
+        message: "Recipe already exists.",
+      });
+    }
+
     const created_by = await adminState(user_id);
 
     const SQL =
@@ -140,7 +151,7 @@ exports.addNewRecipe = async (req, res) => {
     }
 
     res.status(200).json({ message: "Recipe added successfully" });
-    console.log(result.rows[0].recipe_id);
+    console.log(`new recipe id: ${result.rows[0].recipe_id}`);
   } catch (err) {
     res.status(500).json({
       message: "Something went wrong with the server. Please try again later",
