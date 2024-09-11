@@ -211,6 +211,22 @@ exports.updateRecipe = async (req, res) => {
       description,
     } = req.body;
 
+    if (!user_id) {
+      return res.status(400).json({
+        message: "Please provide a user id.",
+      });
+    }
+
+    validUser = await pool.query("SELECT * FROM users WHERE user_id = $1", [
+      user_id,
+    ]);
+
+    if (validUser.rows.length === 0) {
+      return res.status(400).json({
+        message: "Invalid user id. Please provide a valid user id.",
+      });
+    }
+
     const newUserId = await adminState(user_id);
 
     const checkSQL = "SELECT created_by FROM recipes WHERE recipe_id = $1";
@@ -280,6 +296,16 @@ exports.updateRecipe = async (req, res) => {
 exports.myRecipes = async (req, res) => {
   try {
     const user_id = req.params.id;
+
+    validUser = await pool.query("SELECT * FROM users WHERE user_id = $1", [
+      user_id,
+    ]);
+
+    if (validUser.rows.length === 0) {
+      return res.status(400).json({
+        message: "Invalid user id. Please provide a valid user id.",
+      });
+    }
 
     const created_by = await adminState(user_id);
 
