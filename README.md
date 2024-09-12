@@ -65,8 +65,8 @@ A user creates their profile by providing a first name, last name, email, and pa
 
 ### Authentication
 
-- `POST` `/recipefinder/auth/registration`
-  Creates a new user. Requires a JSON body:
+- `POST` `/recipefinder/auth/registration`\
+   Creates a new user. Requires a JSON body:
 
   ```js
   {
@@ -78,7 +78,7 @@ A user creates their profile by providing a first name, last name, email, and pa
   }
   ```
 
-- `POST` `/recipefinder/auth/login`
+- `POST` `/recipefinder/auth/login`\
   User login. Requires a JSON body:
 
   ```js
@@ -88,7 +88,7 @@ A user creates their profile by providing a first name, last name, email, and pa
   }
   ```
 
-- `POST` `/recipefinder/auth/changepassword`
+- `POST` `/recipefinder/auth/changepassword`\
   Changes the user's password. Requires a JSON body:
 
   ```js
@@ -100,7 +100,7 @@ A user creates their profile by providing a first name, last name, email, and pa
   }
   ```
 
-- `POST` `/recipefinder/auth/forgotpassword`
+- `POST` `/recipefinder/auth/forgotpassword`\
   Sends email with link for change password. Requires a JSON body:
 
   ```js
@@ -109,15 +109,15 @@ A user creates their profile by providing a first name, last name, email, and pa
   }
   ```
 
-- `POST` `/recipefinder/auth/logout`
+- `POST` `/recipefinder/auth/logout`\
   User logout. Does not need a body, it only deletes the token.
 
 ### Recipes
 
-- `GET` `/recipefinder/recipes/allrecipes`
+- `GET` `/recipefinder/recipes/allrecipes`\
   Shows the user all the available recipes.
 
-- `POST` `/recipefinder/recipes/addnewrecipe/:id`
+- `POST` `/recipefinder/recipes/addnewrecipe/:id`\
   The user can add a new recipe. Requires a JSON body and the user id as URL parameter:
 
   ```js
@@ -137,36 +137,36 @@ A user creates their profile by providing a first name, last name, email, and pa
   }
   ```
 
-- `GET` `/recipefinder/recipes/findrecipe?q=firstIngredient&q=secondIngredient&q=thirdIngredient`
+- `GET` `/recipefinder/recipes/findrecipe?q=firstIngredient&q=secondIngredient&q=thirdIngredient`\
   Generates a recipe based on the ingredients. The user must give at least three ingredients as a query string.
 
-- `POST` `/recipefinder/recipes/updaterecipe/:id?user_id=test`
+- `POST` `/recipefinder/recipes/updaterecipe/:id?user_id=test`\
   Updates a recipe. Requires the recipe id as a parameter and the user id as query string.
 
-- `GET` `/recipefinder/recipes/myrecipes/:id`
+- `GET` `/recipefinder/recipes/myrecipes/:id`\
   Gets all the recipes of the id given as a parameter.
 
-- `DELETE` `/recipefinder/recipes/deleterecipe/:id?user_id=test`
+- `DELETE` `/recipefinder/recipes/deleterecipe/:id?user_id=test`\
   Deletes a recipe only if the user is an admin. Requires the recipe id as a parameter and the user id as a query string.
 
-- `GET` `/recipefinder/recipes/search?q=test`
+- `GET` `/recipefinder/recipes/search?q=test`\
   Finds a recipe based on the recipe name. Works as a searchbar. Requires the user's input as a query string.
 
 ### Users
 
-- `GET` `/recipefinder/users/getallusers/:id`
+- `GET` `/recipefinder/users/getallusers/:id`\
   Gets all users, only if the user is an admin. Requires a user id as a parameter.
 
-- `DELETE` `/recipefinder/users/deleteuser/:id?user_id=test`
+- `DELETE` `/recipefinder/users/deleteuser/:id?user_id=test`\
   Deletes a user, only if the user is an admin. Requires a user (to be deleted) id as a parameter and the user (the admin) id as a query string.
 
-- `POST` `/recipefinder/users/addtofavourites/:id?user_id=test`
+- `POST` `/recipefinder/users/addtofavourites/:id?user_id=test`\
   Adds a recipe to the user's favorites. Requires the recipe id to be added as a parameter and the user id as a query string.
 
-- `GET` `/recipefinder/users/favourites/:id`
+- `GET` `/recipefinder/users/favourites/:id`\
   Gets all the user's favorites. Requires the user id as a parameter.
 
-- `DELETE` `/users/deletefavourites/:id?user_id=test`
+- `DELETE` `/users/deletefavourites/:id?user_id=test`\
   Deletes a recipe from the user's favorites. Requires the recipe id as a parameter and the user's id as a query string.
 
 ## Database Schema
