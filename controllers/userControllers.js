@@ -42,17 +42,18 @@ exports.getAllUsers = async (req, res) => {
   try {
     const user_id = req.params.id;
 
-    await ifAdmin(req, res, user_id, async () => {
-      const SQL =
-        "SELECT user_id , first_name , last_name , email , admin_state FROM users";
+    const adminResponse = await ifAdmin(user_id, res);
+    if (!adminResponse) return;
 
-      const result = await pool.query(SQL, []);
+    const SQL =
+      "SELECT user_id , first_name , last_name , email , admin_state FROM users";
 
-      const allUsers = result.rows;
+    const result = await pool.query(SQL, []);
 
-      return res.status(200).json({
-        allUsers,
-      });
+    const allUsers = result.rows;
+
+    return res.status(200).json({
+      allUsers,
     });
   } catch (err) {
     res.status(500).json({
@@ -68,30 +69,31 @@ exports.deleteUser = async (req, res) => {
     const { user_id } = req.query;
     const userIdToDelete = req.params.id;
 
-    await ifAdmin(req, res, user_id, async () => {
-      const validUserSQL = "SELECT * FROM users WHERE user_id = $1";
-      const user = await pool.query(validUserSQL, [userIdToDelete]);
+    const adminResponse = await ifAdmin(user_id, res);
+    if (!adminResponse) return;
 
-      if (user.rows.length === 0) {
-        return res.status(400).json({
-          message: "User does not exist.",
-        });
-      }
+    const validUserSQL = "SELECT * FROM users WHERE user_id = $1";
+    const user = await pool.query(validUserSQL, [userIdToDelete]);
 
-      newUserid = await adminState(userIdToDelete);
-
-      if (newUserid === "admin") {
-        return res.status(400).json({
-          message: "You cannot delete an admin user.",
-        });
-      }
-
-      const SQL = "DELETE FROM users WHERE user_id = $1";
-      const userToDelete = await pool.query(SQL, [userIdToDelete]);
-
-      return res.status(200).json({
-        message: "User deleted successfully",
+    if (user.rows.length === 0) {
+      return res.status(400).json({
+        message: "User does not exist.",
       });
+    }
+
+    newUserid = await adminState(userIdToDelete);
+
+    if (newUserid === "admin") {
+      return res.status(400).json({
+        message: "You cannot delete an admin user.",
+      });
+    }
+
+    const SQL = "DELETE FROM users WHERE user_id = $1";
+    const userToDelete = await pool.query(SQL, [userIdToDelete]);
+
+    return res.status(200).json({
+      message: "User deleted successfully",
     });
   } catch (err) {
     res.status(500).json({

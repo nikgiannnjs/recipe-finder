@@ -357,16 +357,18 @@ exports.deleteRecipe = async (req, res) => {
       });
     }
 
-    await validRecipe(req, res, recipe_id, async () => {
-      await ifAdmin(req, res, user_id, async () => {
-        const SQL = "DELETE FROM recipes WHERE recipe_id = $1";
+    const validRecipeResponse = await validRecipe(recipe_id, res);
+    if (!validRecipeResponse) return;
 
-        const recipeToDelete = await pool.query(SQL, [recipe_id]);
+    const adminResponse = await ifAdmin(user_id, res);
+    if (!adminResponse) return;
 
-        res.status(200).json({
-          message: "Recipe deleted succesfully",
-        });
-      });
+    const SQL = "DELETE FROM recipes WHERE recipe_id = $1";
+
+    const recipeToDelete = await pool.query(SQL, [recipe_id]);
+
+    res.status(200).json({
+      message: "Recipe deleted succesfully",
     });
   } catch (err) {
     res.status(500).json({
