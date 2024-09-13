@@ -173,40 +173,4 @@ A user creates their profile by providing a first name, last name, email, and pa
 
 #### erDiagram
 
-```
-    recipes {
-        int recipe_id PK
-        varchar category
-        varchar recipe_name
-        varchar first_ingredient
-        varchar second_ingredient
-        varchar third_ingredient
-        varchar fourth_ingredient
-        varchar fifth_ingredient
-        int cooking_time
-        varchar description
-        timestamp created_at
-        timestamp updated_at
-    }
-    categories {
-        int category_id PK
-        varchar category UK
-    }
-    users {
-        int user_id PK
-        varchar first_name
-        varchar last_name
-        varchar email UK
-        boolean admin_state
-        varchar user_password UK
-    }
-
-    favourites {
-        varchar user_id
-        int recipe_id
-    }
-
-    recipes ||--o{ categories : "has"
-    users ||--o{ favourites : "has"
-    recipes ||--o{ favourites : "has"
-```
+![Alt text](./dbDiagram.png)

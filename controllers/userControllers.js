@@ -109,14 +109,14 @@ exports.addToFavourites = async (req, res) => {
     const { user_id } = req.query;
     const recipe_id = req.params.id;
 
-    await validRecipe(req, res, recipe_id, async () => {
-      const SQL =
-        "INSERT INTO favourites (user_id , recipe_id) VALUES ($1 , $2)";
-      const result = await pool.query(SQL, [user_id, recipe_id]);
+    const validRecipeResponse = await validRecipe(recipe_id, res);
+    if (!validRecipeResponse) return;
 
-      res.status(200).json({
-        message: "Recipe added to favourites successfully.",
-      });
+    const SQL = "INSERT INTO favourites (user_id , recipe_id) VALUES ($1 , $2)";
+    const result = await pool.query(SQL, [user_id, recipe_id]);
+
+    res.status(200).json({
+      message: "Recipe added to favourites successfully.",
     });
   } catch (err) {
     res.status(500).json({
@@ -194,3 +194,5 @@ exports.deleteFromFavourites = async (req, res) => {
     message: "Reciped deleted from favourites successfully.",
   });
 };
+
+//change first_name, last_name, email

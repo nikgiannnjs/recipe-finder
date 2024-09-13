@@ -75,8 +75,7 @@ exports.addNewRecipe = async (req, res) => {
 
     if (categoryCheckResult.rows.length === 0) {
       return res.status(400).json({
-        message:
-          "Invalid category.Please provide a valid category. See all categories here",
+        message: "Invalid category.Please provide a valid category.",
       });
     }
 
