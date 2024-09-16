@@ -147,6 +147,40 @@ exports.logIn = async (req, res) => {
   }
 };
 
+exports.changeEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user_id = req.params.id;
+
+    const user = await pool.query("SELECT * FROM users WHERE user_id = $1", [
+      user_id,
+    ]);
+
+    if (user.rows.length === 0) {
+      return res.status(400).json({
+        message: "User does not exist.",
+      });
+    }
+
+    const newEmail = await pool.query(
+      "UPDATE users SET email = $1 WHERE user_id = $2",
+      [email, user_id]
+    );
+
+    if (newEmail.rowCount > 0) {
+      return res.status(200).json({
+        message: "Email updated succesfully.",
+      });
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later.",
+    });
+
+    console.error("Server error at /changeemail endpoint", err);
+  }
+};
+
 exports.changePassword = async (req, res) => {
   try {
     const { email, oldPassword, newPassword, newPasswordConfirm } = req.body;
@@ -308,5 +342,11 @@ exports.logOut = async (req, res) => {
     } else {
       res.status(400).json({ error: "No token provided" });
     }
-  } catch (err) {}
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later.",
+    });
+
+    console.error("erver error at /logout endpoint", err);
+  }
 };

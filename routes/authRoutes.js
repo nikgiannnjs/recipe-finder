@@ -8,6 +8,8 @@ router.post("/registration", authController.signUp);
 
 router.post("/login", authController.logIn);
 
+router.post("/changeemail/:id", authController.changeEmail);
+
 router.post("/changepassword", authController.changePassword);
 
 router.post("/forgotpassword", authController.forgotPassword);
