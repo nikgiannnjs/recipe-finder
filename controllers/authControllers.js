@@ -167,17 +167,59 @@ exports.changeEmail = async (req, res) => {
       [email, user_id]
     );
 
-    if (newEmail.rowCount > 0) {
-      return res.status(200).json({
-        message: "Email updated succesfully.",
+    if (newEmail.rowCount === 0) {
+      return res.status(400).json({
+        message: "Could not update email.Please try again.",
       });
     }
+
+    res.status(200).json({
+      message: "Email updated succesfully.",
+    });
   } catch (err) {
     res.status(500).json({
       message: "Something went wrong with the server. Please try again later.",
     });
 
     console.error("Server error at /changeemail endpoint", err);
+  }
+};
+
+exports.changeUserName = async (req, res) => {
+  try {
+    const user_id = req.params.id;
+    const { first_name, last_name } = req.body;
+
+    const user = await pool.query("SELECT * FROM users WHERE user_id = $1", [
+      user_id,
+    ]);
+
+    if (user.rows.length === 0) {
+      return res.status(400).json({
+        message: "User does not exist.",
+      });
+    }
+
+    const newUser = await pool.query(
+      "UPDATE users SET first_name = $1 , last_name = $2 WHERE user_id = $3",
+      [first_name, last_name, user_id]
+    );
+
+    if (newUser.rowCount === 0) {
+      return res.status(400).json({
+        message: "Could not update user name. Please try again.",
+      });
+    }
+
+    res.status(200).json({
+      message: "User name updated successfully.",
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Something went wrong with the server. Please try again later.",
+    });
+
+    console.error("Server error at /changeusername endpoint", err);
   }
 };
 

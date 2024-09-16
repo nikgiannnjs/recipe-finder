@@ -10,6 +10,8 @@ router.post("/login", authController.logIn);
 
 router.post("/changeemail/:id", authController.changeEmail);
 
+router.post("/changeusername/:id", authController.changeUserName);
+
 router.post("/changepassword", authController.changePassword);
 
 router.post("/forgotpassword", authController.forgotPassword);
