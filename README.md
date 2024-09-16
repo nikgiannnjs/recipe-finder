@@ -88,6 +88,25 @@ A user creates their profile by providing a first name, last name, email, and pa
   }
   ```
 
+- `POST` `/recipefinder/auth/updateemail/:id`\
+  Update user email. Requires a JSON body and a user id as a parameter:
+
+  ```js
+  {
+    "email": "test@gmail.com"
+  }
+  ```
+
+- `POST` `/recipefinder/auth/updateusername/:id`\
+  Update user first name and last name. Requires a JSON body and a user id as a parameter:
+
+  ```js
+  {
+    "first_name": "Demo first name",
+    "last_name": "Demo last name"
+  }
+  ```
+
 - `POST` `/recipefinder/auth/changepassword`\
   Changes the user's password. Requires a JSON body:
 
